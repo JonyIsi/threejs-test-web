@@ -5,8 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GLB Model Viewer</title>
     <style>
-        body { margin: 0; }
-        canvas { display: block; }
+        body { 
+            margin: 0;
+            background-image: url('背景图.png');
+            background-repeat: no-repeat;
+            height: 542px; /* 固定高度 */
+            overflow: hidden;
+        }
+
+        @media screen and (min-width: 1920px) {
+            body {
+                background-size: 100% auto;
+                background-position: center top;
+            }
+        }
+
+        @media screen and (max-width: 1919px) {
+            body {
+                background-size: auto 542px;
+                background-position: top center;
+            }
+        }
+
+        canvas { 
+            display: block;
+            position: relative;
+            z-index: 1;
+        }
     </style>
 </head>
 <body>

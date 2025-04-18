@@ -1,8 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
-import { RectAreaLightHelper } from 'three/examples/jsm/helpers/RectAreaLightHelper.js';
+import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
 import { RectAreaLightUniformsLib } from 'three/examples/jsm/lights/RectAreaLightUniformsLib.js';
 
 // 场景设置
@@ -17,18 +16,19 @@ camera.position.set(0, -15.7, 177.04);
 // 设置摄像机旋转角度 (x, y, z) 单位:弧度
 camera.rotation.set(0.0976, 0, 0);
 
-const renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer({ alpha: true });
+renderer.setClearColor(0x000000, 0);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.2;
+renderer.toneMappingExposure = 1;  // 曝光度设置
 renderer.shadowMap.enabled = true;  // 启用阴影
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;  // 使用柔和阴影
 renderer.physicallyCorrectLights = true;  // 使用物理正确的光照计算
 document.body.appendChild(renderer.domElement);
 
 // 加载环境贴图
-new RGBELoader().load('peppermint-powerplant-2_2K_2776bb05-fdf5-4fa2-8ae0-bw.hdr', function(texture) {
+new EXRLoader().load('peppermint-powerplant-2_2K_2776bb05-fdf5-4fa2-8ae0-bw.exr', function(texture) {
     texture.mapping = THREE.EquirectangularReflectionMapping;
     
     // 创建PMREMGenerator来处理HDR贴图
@@ -40,7 +40,7 @@ new RGBELoader().load('peppermint-powerplant-2_2K_2776bb05-fdf5-4fa2-8ae0-bw.hdr
     
     // 应用贴图
     scene.environment = envMap;  // 保留环境反射
-    scene.background = new THREE.Color(0xFFDB00);  // 设置黄色背景
+    // 不设置背景，保持透明
     
     // 清理
     pmremGenerator.dispose();
@@ -48,42 +48,42 @@ new RGBELoader().load('peppermint-powerplant-2_2K_2776bb05-fdf5-4fa2-8ae0-bw.hdr
 });
 
 // 创建点光源
-const areaLight = new THREE.PointLight(0xFFFFFF, 30, 200, 1.5);  // 颜色, 强度, 距离, 衰减
-areaLight.position.set(-60, 60, 30);
+const areaLight = new THREE.PointLight(0xFFFFFF, 80, 200, 1.5);  // 颜色, 强度, 距离, 衰减
+areaLight.position.set(-60, 30, 10);
 
 // 设置阴影参数
-areaLight.castShadow = false;
-areaLight.shadow.radius = 20;  // 增加阴影模糊度
-areaLight.shadow.mapSize.set(40000, 40000);
-areaLight.shadow.camera.near = 1;
-areaLight.shadow.camera.far = 300;
+areaLight.castShadow = true;
+areaLight.shadow.radius = 10;  // 增加阴影模糊度
+areaLight.shadow.mapSize.set(2048, 2048);
+areaLight.shadow.camera.near = 0.1;
+areaLight.shadow.camera.far = 50;
 areaLight.shadow.bias = -0.002;  // 调整阴影偏移
-// areaLight.shadow.normalBias = 0.05;  // 添加法线偏移以减少阴影伪影
+
 
 scene.add(areaLight);
 
 // 创建第二个点光源（底部补光）
-const bottomLight = new THREE.PointLight(0xFFD53F, 10, 200, 1.5);  // 颜色, 强度, 距离, 衰减
-bottomLight.position.set(-60, 0, 30);  // 在主光源下方
+const bottomLight = new THREE.PointLight(0xFFFFFF, 5, 200, 1.5);  // 颜色, 强度, 距离, 衰减
+bottomLight.position.set(0, -20, 0);  
 
 // 设置阴影参数
 bottomLight.castShadow = false;
+bottomLight.shadow.radius = 10;  // 增加阴影模糊度
+bottomLight.shadow.mapSize.set(2048, 2048);
+bottomLight.shadow.camera.near = 0.1;
+bottomLight.shadow.camera.far = 50;
+bottomLight.shadow.bias = -0.002;  // 调整阴影偏移
 
 scene.add(bottomLight);
 
-// 添加辅助线
-const bottomLightHelper = new THREE.PointLightHelper(bottomLight, 10);
-scene.add(bottomLightHelper);
-
-// 添加辅助线
-const lightHelper = new THREE.PointLightHelper(areaLight, 10);
-scene.add(lightHelper);
 
 // 控制器设置
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-controls.minDistance = 50;  // 最小距离
+controls.minDistance = 200;  // 最小距离
 controls.maxDistance = 500; // 最大距离
+controls.enableZoom = false; // 禁用滚轮缩放
+controls.enablePan = false; // 禁用平移
 
 // 变量声明
 let mixer = null;
@@ -93,58 +93,16 @@ let modelLights = [];  // 存储模型中的灯光
 // 加载GLB模型
 const loader = new GLTFLoader();
 loader.load(
-    '币运动_精简_烘焙2.glb',
+    '币静态_web.glb',
     (gltf) => {
         scene.add(gltf.scene);
         
-        // 遍历模型的所有部分
-        gltf.scene.traverse((child) => {
-            if (child.isMesh) {
-                // 根据名称调整不同部分的位置
-                if (child.name === '币') {
-                    child.position.x += 50; // 向右移动50个单位
-                }
-                // 可以继续添加其他部分的调整
-                // if (child.name === '其他部分名称') {
-                //     child.position.x += 30;
-                // }
-            }
-        });
-        
-        // 设置动画
-        if (gltf.animations && gltf.animations.length) {
-            mixer = new THREE.AnimationMixer(gltf.scene);
-            gltf.animations.forEach((clip) => {
-                const action = mixer.clipAction(clip);
-                action.setLoop(THREE.LoopOnce);
-                action.clampWhenFinished = true;
-                action.play();
-                action.time = clip.duration; // 设置动画时间到最后一帧
-                action.paused = true; // 暂停动画
-            });
-        }
 
         // 为模型中的所有物体启用阴影
         gltf.scene.traverse((child) => {
             if (child.isMesh) {
                 child.castShadow = true;    // 投射阴影
                 child.receiveShadow = true; // 接收阴影
-                // 修改材质颜色
-                if (child.material) {
-                    if (Array.isArray(child.material)) {
-                        child.material.forEach(mat => {
-                            if (mat.color) {
-                                mat.color.setHex(0xFFD53F);
-                                console.log('更新材质颜色(多材质):', child.name);
-                            }
-                        });
-                    } else {
-                        if (child.material.color) {
-                            child.material.color.setHex(0xFFD53F);
-                            console.log('更新材质颜色:', child.name);
-                        }
-                    }
-                }
             }
             
             // 查找所有灯光相关的对象
@@ -162,16 +120,6 @@ loader.load(
                     parent: child.parent ? child.parent.name : 'none'
                 });
 
-                // 为平行光添加辅助线
-                if (child.type === 'DirectionalLight') {
-                    
-                    const helper = new THREE.DirectionalLightHelper(child, 10);
-                    helper.name = child.name + '_helper';
-                    scene.add(helper);
-                    
-                    
-                    console.log('添加了平行光辅助线:', child.name);
-                }
 
                 // 修改灯光和阴影设置
                 if (child.name === '日光001') {
@@ -195,7 +143,6 @@ loader.load(
                     child.receiveShadow = true;
                     child.shadow.radius = 6;  // 增加阴影柔和度
                     child.shadow.normalBias = 0.02;
-                    // child.shadow.normalBias = 0.05; 
                     child.shadow.mapSize.set(2048, 2048);
                     child.shadow.camera.near = 0.1;
                     child.shadow.camera.far = 50;
@@ -244,9 +191,31 @@ loader.load(
 // 时钟用于动画更新
 const clock = new THREE.Clock();
 
+// 添加鼠标视差效果
+let mouseX = 0;
+let mouseY = 0;
+let targetX = 0;
+let targetY = 0;
+const windowHalfX = window.innerWidth / 2;
+const windowHalfY = window.innerHeight / 2;
+
+document.addEventListener('mousemove', (event) => {
+    mouseX = (event.clientX - windowHalfX) / windowHalfX; // -1 到 1
+    mouseY = (event.clientY - windowHalfY) / windowHalfY; // -1 到 1
+});
+
 // 动画循环
 function animate() {
     requestAnimationFrame(animate);
+    
+    // 平滑插值计算目标位置
+    targetX += (mouseX * 0.5 - targetX) * 0.05;
+    targetY += (mouseY * 0.5 - targetY) * 0.05;
+    
+    // 应用视差效果到相机
+    camera.position.x = targetX * 30;
+    camera.position.y = -targetY * 30;
+    camera.lookAt(scene.position);
     
     // 更新动画
     if (mixer) {
@@ -265,4 +234,4 @@ window.addEventListener('resize', () => {
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     renderer.setSize(width, height);
-});
+}); 
