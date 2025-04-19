@@ -21,7 +21,7 @@ renderer.setClearColor(0x000000, 0);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1;  // 曝光度设置
+renderer.toneMappingExposure = 0.7;  // 曝光度设置
 renderer.shadowMap.enabled = true;  // 启用阴影
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;  // 使用柔和阴影
 renderer.physicallyCorrectLights = true;  // 使用物理正确的光照计算
@@ -48,13 +48,13 @@ new EXRLoader().load('peppermint-powerplant-2_2K_2776bb05-fdf5-4fa2-8ae0-bw.exr'
 });
 
 // 创建点光源
-const areaLight = new THREE.PointLight(0xFFFFFF, 80, 200, 1.5);  // 颜色, 强度, 距离, 衰减
+const areaLight = new THREE.PointLight(0xFFFFFF, 200, 400, 1.5);  // 颜色, 强度, 距离, 衰减
 areaLight.position.set(-60, 30, 10);
 
 // 设置阴影参数
 areaLight.castShadow = true;
 areaLight.shadow.radius = 10;  // 增加阴影模糊度
-areaLight.shadow.mapSize.set(2048, 2048);
+areaLight.shadow.mapSize.set(8000, 8000);
 areaLight.shadow.camera.near = 0.1;
 areaLight.shadow.camera.far = 50;
 areaLight.shadow.bias = -0.002;  // 调整阴影偏移
@@ -63,7 +63,7 @@ areaLight.shadow.bias = -0.002;  // 调整阴影偏移
 scene.add(areaLight);
 
 // 创建第二个点光源（底部补光）
-const bottomLight = new THREE.PointLight(0xFFFFFF, 5, 200, 1.5);  // 颜色, 强度, 距离, 衰减
+const bottomLight = new THREE.PointLight(0xFFFFFF, 10, 400, 1.5);  // 颜色, 强度, 距离, 衰减
 bottomLight.position.set(0, -20, 0);  
 
 // 设置阴影参数
@@ -213,8 +213,8 @@ function animate() {
     targetY += (mouseY * 0.5 - targetY) * 0.05;
     
     // 应用视差效果到相机
-    camera.position.x = targetX * 30;
-    camera.position.y = -targetY * 30;
+    camera.position.x = targetX * 40;
+    camera.position.y = -targetY * 40;
     camera.lookAt(scene.position);
     
     // 更新动画
