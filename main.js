@@ -53,7 +53,7 @@ areaLight.position.set(-60, 30, 10);
 
 // 设置阴影参数
 areaLight.castShadow = true;
-areaLight.shadow.radius = 10;  // 增加阴影模糊度
+areaLight.shadow.radius = 20;  // 增加阴影模糊度
 areaLight.shadow.mapSize.set(8000, 8000);
 areaLight.shadow.camera.near = 0.1;
 areaLight.shadow.camera.far = 50;
